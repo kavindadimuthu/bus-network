@@ -50,11 +50,11 @@ def build_config(args):
         "environment": {
             "max_routes": 4,
             "max_stops_per_route": 8,
-            "cost_weight": 0.0,
+            "cost_weight": 2.0,
         },
         "agent": {
             "alpha": 0.5,
-            "gamma": 0.9,
+            "gamma": 1.0,
             "epsilon": 1.0,
             "epsilon_min": 0.05,
             "epsilon_decay": 0.9995,

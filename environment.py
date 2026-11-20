@@ -36,16 +36,28 @@ class BusRouteEnvironment:
         )
 
     def served_demand(self, routes):
-        total = 0
+        """Count each OD pair once when served directly or with one transfer.
 
-        for (origin, destination), passengers in self.demand.items():
-            if any(
-                origin in route and destination in route
-                for route in routes
-            ):
-                total += passengers
+        Routes operate in both directions. A transfer requires a shared stop;
+        walking between stops, capacity and transfer timing are not modeled.
+        """
+        route_stops = [set(route) for route in routes if len(route) >= 2]
+        reachable = {}
+        for first_route in route_stops:
+            destinations = set(first_route)
+            for second_route in route_stops:
+                # Compare the original route, not the expanded destinations:
+                # expanding recursively would incorrectly allow more transfers.
+                if first_route & second_route:
+                    destinations.update(second_route)
+            for origin in first_route:
+                reachable.setdefault(origin, set()).update(destinations)
 
-        return total
+        return sum(
+            passengers
+            for (origin, destination), passengers in self.demand.items()
+            if destination in reachable.get(origin, ())
+        )
 
     def objective(self, routes):
         served = self.served_demand(routes)
@@ -56,6 +68,13 @@ class BusRouteEnvironment:
         )
 
         return served - self.cost_weight * route_cost
+
+    def construction_objective(self):
+        """Score completed routes and the usable route currently being built."""
+        routes = self.completed_routes
+        if len(self.current_route) >= 2:
+            routes += (self.current_route,)
+        return self.objective(routes)
 
     def available_actions(self):
         if self.done:
@@ -87,7 +106,7 @@ class BusRouteEnvironment:
         if action not in self.available_actions():
             raise ValueError(f"Invalid action: {action}")
 
-        old_score = self.objective(self.completed_routes)
+        old_score = self.construction_objective()
 
         action_type = action[0]
 
@@ -104,7 +123,7 @@ class BusRouteEnvironment:
         elif action_type == "STOP":
             self.done = True
 
-        new_score = self.objective(self.completed_routes)
+        new_score = self.construction_objective()
         reward = new_score - old_score
 
         return self.get_state(), reward, self.done

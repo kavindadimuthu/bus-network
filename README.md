@@ -26,8 +26,15 @@ Each folder contains:
 An interruption preserves completed metric rows. The final Q-table CSV is saved
 only when training finishes.
 The final plot describes the final agent; best_results.json describes the best one.
-This environment measures direct demand coverage and route cost; it does not
-simulate passenger waiting times, capacity, or transfers. Evaluation currently uses
+This environment measures demand coverage with at most one transfer and route cost.
+Routes operate in both directions. An OD pair is served when both stops share a
+route, or when an origin route and a destination route share a transfer stop.
+Each OD pair counts once; journeys needing two or more transfers are unserved.
+Rewards use the change in the objective after each action, including the route
+currently being built once it has two stops. Finishing a route does not reward
+its demand again. Passenger waiting times, capacity, and transfer timing are not
+simulated. Older runs used direct-only coverage and are not directly comparable.
+Evaluation currently uses
 the same static network/demand as training, so it does not measure generalization.
 
 ## Inspecting the Q-table
