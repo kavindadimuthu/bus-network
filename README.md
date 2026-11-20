@@ -8,6 +8,15 @@ For a quick experiment: `python main.py --episodes 100 --seed 42 --eval-interval
 Defaults: 10,000 episodes, seed 42, evaluation every 1,000 episodes and at the end.
 Plots are saved automatically; add `--show` to display them too.
 
+Exploration decreases linearly from epsilon 1.0 to 0.05 over the first 80% of
+training episodes (rounded up), then stays at 0.05 for the remaining episodes.
+Epsilon is updated after each episode; the first episode uses 1.0. The run config
+records `epsilon_decay_episodes` instead of the former exponential multiplier.
+For 10,000 episodes the decrement is 0.00011875 per episode, giving epsilon
+0.525 after 4,000 episodes and 0.05 after 8,000 episodes. The final 2,000
+episodes use 0.05. Standalone agents default to a 10,000-episode decay horizon;
+`main.py` sets it to 80% of the requested `--episodes` value, with a minimum of one.
+
 Each folder contains:
 
 - `config.json`: training, agent, environment and evaluation settings.

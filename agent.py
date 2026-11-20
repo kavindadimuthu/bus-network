@@ -9,8 +9,12 @@ class QLearningAgent:
         gamma=1.0,
         epsilon=1.0,
         epsilon_min=0.05,
-        epsilon_decay=0.9995
+        epsilon_decay_episodes=10000
     ):
+        if not 0 <= epsilon_min <= epsilon <= 1:
+            raise ValueError("Require 0 <= epsilon_min <= epsilon <= 1")
+        if not isinstance(epsilon_decay_episodes, int) or epsilon_decay_episodes < 1:
+            raise ValueError("epsilon_decay_episodes must be a positive integer")
         self.q_table = defaultdict(dict)
         self.updated_state_action_pairs = 0
 
@@ -18,7 +22,9 @@ class QLearningAgent:
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = epsilon_min
-        self.epsilon_decay = epsilon_decay
+        self.epsilon_start = epsilon
+        self.epsilon_decay_episodes = epsilon_decay_episodes
+        self.epsilon_decay_steps = 0
 
     def q_value(self, state, action):
         return self.q_table[state].get(action, 0.0)
@@ -68,7 +74,13 @@ class QLearningAgent:
         return abs(new_q - old_q)
 
     def decay_epsilon(self):
+        """Decrease epsilon linearly after each episode, then hold the floor."""
+        self.epsilon_decay_steps += 1
+        if self.epsilon_decay_steps >= self.epsilon_decay_episodes:
+            self.epsilon = self.epsilon_min
+            return
+        progress = min(self.epsilon_decay_steps / self.epsilon_decay_episodes, 1.0)
         self.epsilon = max(
             self.epsilon_min,
-            self.epsilon * self.epsilon_decay
+            self.epsilon_start - (self.epsilon_start - self.epsilon_min) * progress
         )
