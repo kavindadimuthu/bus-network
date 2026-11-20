@@ -12,6 +12,7 @@ class QLearningAgent:
         epsilon_decay=0.9995
     ):
         self.q_table = defaultdict(dict)
+        self.updated_state_action_pairs = 0
 
         self.alpha = alpha
         self.gamma = gamma
@@ -59,9 +60,12 @@ class QLearningAgent:
             )
             target = reward + self.gamma * best_next_q
 
-        self.q_table[state][action] = (
-            old_q + self.alpha * (target - old_q)
-        )
+        if action not in self.q_table[state]:
+            self.updated_state_action_pairs += 1
+
+        new_q = old_q + self.alpha * (target - old_q)
+        self.q_table[state][action] = new_q
+        return abs(new_q - old_q)
 
     def decay_epsilon(self):
         self.epsilon = max(

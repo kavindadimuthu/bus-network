@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
-def plot_training_rewards(rewards_history, window=50):
+def plot_training_rewards(rewards_history, window=50, output_path=None, show=True):
 
     plt.figure(figsize=(10, 5))
 
@@ -52,7 +52,12 @@ def plot_training_rewards(rewards_history, window=50):
 
     plt.grid(True)
 
-    plt.show()
+    if output_path:
+        plt.savefig(output_path, dpi=180, bbox_inches="tight")
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
 def plot_route_network(network, results, output_path=None, show=True):
     """Draw every road and overlay evaluated routes on a fixed reference layout."""
@@ -138,7 +143,13 @@ if __name__ == '__main__':
     from pathlib import Path
     from data_loader import load_network
 
-    output_dir = Path(__file__).resolve().parent / 'outputs'
+    import argparse
+    parser = argparse.ArgumentParser(description="View a saved training run")
+    parser.add_argument("run_dir", nargs="?", type=Path)
+    args = parser.parse_args()
+    project = Path(__file__).resolve().parent
+    candidates = sorted((project / 'runs').glob('*/final_results.json'))
+    output_dir = args.run_dir or (candidates[-1].parent if candidates else project / 'outputs')
     results_path = output_dir / 'final_results.json'
     if not results_path.exists():
         raise SystemExit('Run main.py first to generate final_results.json.')
